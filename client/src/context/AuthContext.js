@@ -5,6 +5,11 @@ const AuthContext = createContext();
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Отладочная информация (можно удалить после проверки)
+if (process.env.NODE_ENV === 'production') {
+  console.log('API URL:', API_URL);
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,9 +48,23 @@ export const AuthProvider = ({ children }) => {
       setUser(user);
       return { success: true };
     } catch (error) {
+      console.error('Login error:', error);
+      let errorMessage = 'Ошибка входа';
+      
+      if (error.response) {
+        // Сервер ответил с ошибкой
+        errorMessage = error.response.data?.error || `Ошибка сервера: ${error.response.status}`;
+      } else if (error.request) {
+        // Запрос отправлен, но ответа нет
+        errorMessage = `Не удалось подключиться к серверу. Проверьте URL: ${API_URL}`;
+      } else {
+        // Ошибка при настройке запроса
+        errorMessage = error.message || 'Ошибка при отправке запроса';
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.error || 'Ошибка входа',
+        error: errorMessage,
       };
     }
   };
