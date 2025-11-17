@@ -37,6 +37,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:orderId', authenticateToken, async (req, res) => {
   try {
     const { orderId } = req.params;
+    const { includeHistory } = req.query; // Флаг для включения полной истории
     
     const order = await get('SELECT * FROM orders WHERE id = ?', [orderId]);
     if (!order) {
@@ -53,17 +54,31 @@ router.get('/:orderId', authenticateToken, async (req, res) => {
       ORDER BY op.sequence_order
     `, [orderId]);
 
-    // Получаем информацию о текущих выполнениях для каждого процесса
+    // Получаем информацию о выполнениях для каждого процесса
     for (const process of processes) {
-      const executions = await query(`
-        SELECT pe.*, u.name as user_name
-        FROM process_executions pe
-        JOIN users u ON pe.user_id = u.id
-        WHERE pe.order_process_id = ? AND pe.completed_at IS NULL
-        ORDER BY pe.started_at DESC
-      `, [process.id]);
-      
-      process.active_executions = executions;
+      if (includeHistory === 'true') {
+        // Полная история всех выполнений (для админ-панели)
+        const allExecutions = await query(`
+          SELECT pe.*, u.name as user_name, u.username
+          FROM process_executions pe
+          JOIN users u ON pe.user_id = u.id
+          WHERE pe.order_process_id = ?
+          ORDER BY pe.started_at DESC
+        `, [process.id]);
+        
+        process.all_executions = allExecutions;
+      } else {
+        // Только активные выполнения (для обычных пользователей)
+        const executions = await query(`
+          SELECT pe.*, u.name as user_name
+          FROM process_executions pe
+          JOIN users u ON pe.user_id = u.id
+          WHERE pe.order_process_id = ? AND pe.completed_at IS NULL
+          ORDER BY pe.started_at DESC
+        `, [process.id]);
+        
+        process.active_executions = executions;
+      }
     }
 
     res.json({ order, processes });

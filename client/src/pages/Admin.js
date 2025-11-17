@@ -34,6 +34,8 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   
   // Форма создания/редактирования
   const [formData, setFormData] = useState({
@@ -127,6 +129,38 @@ const Admin = () => {
       } catch (error) {
         alert(error.response?.data?.error || 'Ошибка при удалении заказа');
       }
+    }
+  };
+
+  const handleViewOrderDetails = async (order) => {
+    try {
+      setLoadingDetails(true);
+      const response = await axios.get(`${API_URL}/orders/${order.id}?includeHistory=true`);
+      setSelectedOrderDetails(response.data);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      alert('Ошибка при загрузке деталей заказа');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const formatDuration = (startTime, endTime) => {
+    if (!startTime || !endTime) return '-';
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const diff = Math.floor((end - start) / 1000); // разница в секундах
+    
+    const hours = Math.floor(diff / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
+    const seconds = diff % 60;
+    
+    if (hours > 0) {
+      return `${hours}ч ${minutes}м ${seconds}с`;
+    } else if (minutes > 0) {
+      return `${minutes}м ${seconds}с`;
+    } else {
+      return `${seconds}с`;
     }
   };
 
@@ -285,6 +319,13 @@ const Admin = () => {
                         <td>
                           <div className="action-buttons">
                             <button
+                              onClick={() => handleViewOrderDetails(order)}
+                              className="btn-history"
+                              title="История выполнения"
+                            >
+                              📊
+                            </button>
+                            <button
                               onClick={() => navigate(`/orders/${order.id}`)}
                               className="btn-view"
                               title="Просмотр"
@@ -361,6 +402,85 @@ const Admin = () => {
           </div>
         )}
       </div>
+
+      {/* Модальное окно с детальной информацией о выполнении */}
+      {selectedOrderDetails && (
+        <div className="modal-overlay" onClick={() => setSelectedOrderDetails(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>История выполнения заказа #{selectedOrderDetails.order.order_number}</h2>
+              <button
+                className="modal-close"
+                onClick={() => setSelectedOrderDetails(null)}
+              >
+                ×
+              </button>
+            </div>
+            
+            {loadingDetails ? (
+              <div className="loading">Загрузка...</div>
+            ) : (
+              <div className="execution-history">
+                {selectedOrderDetails.processes.map((process, index) => (
+                  <div key={process.id} className="process-history-section">
+                    <h3>
+                      {index + 1}. {process.process_name}
+                      <span className={`process-status-badge ${process.status}`}>
+                        {process.status === 'pending' && 'Ожидает'}
+                        {process.status === 'in_progress' && 'В работе'}
+                        {process.status === 'completed' && 'Завершен'}
+                      </span>
+                    </h3>
+                    
+                    {process.all_executions && process.all_executions.length > 0 ? (
+                      <table className="execution-table">
+                        <thead>
+                          <tr>
+                            <th>Сотрудник</th>
+                            <th>Оборудование</th>
+                            <th>Начало работы</th>
+                            <th>Окончание работы</th>
+                            <th>Длительность</th>
+                            <th>Статус</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {process.all_executions.map((execution) => (
+                            <tr key={execution.id}>
+                              <td>{execution.user_name || execution.username}</td>
+                              <td>{execution.equipment || '-'}</td>
+                              <td>
+                                {execution.started_at
+                                  ? new Date(execution.started_at).toLocaleString('ru-RU')
+                                  : '-'}
+                              </td>
+                              <td>
+                                {execution.completed_at
+                                  ? new Date(execution.completed_at).toLocaleString('ru-RU')
+                                  : execution.started_at ? 'В процессе...' : '-'}
+                              </td>
+                              <td>
+                                {formatDuration(execution.started_at, execution.completed_at)}
+                              </td>
+                              <td>
+                                <span className={`execution-status ${execution.completed_at ? 'completed' : 'in-progress'}`}>
+                                  {execution.completed_at ? 'Завершено' : 'В работе'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="no-executions">Выполнений пока нет</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
