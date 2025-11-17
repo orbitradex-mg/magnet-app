@@ -62,10 +62,25 @@ const createTables = async () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       order_number TEXT UNIQUE NOT NULL,
       status TEXT NOT NULL DEFAULT 'in_progress',
+      description TEXT,
+      photo_url TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       completed_at DATETIME
     )
   `);
+
+  // Добавляем новые поля, если таблица уже существует
+  try {
+    await runQuery('ALTER TABLE orders ADD COLUMN description TEXT');
+  } catch (e) {
+    // Поле уже существует, игнорируем ошибку
+  }
+
+  try {
+    await runQuery('ALTER TABLE orders ADD COLUMN photo_url TEXT');
+  } catch (e) {
+    // Поле уже существует, игнорируем ошибку
+  }
 
   // Таблица процессов заказа
   await runQuery(`

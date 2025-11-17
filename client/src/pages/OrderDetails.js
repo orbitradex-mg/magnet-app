@@ -118,7 +118,17 @@ const OrderDetails = () => {
         <button onClick={() => navigate('/orders')} className="back-button">
           ← Назад к заказам
         </button>
-        <h1>Заказ #{order.order_number}</h1>
+        <div className="order-header-info">
+          <h1>Заказ #{order.order_number}</h1>
+          {order.description && (
+            <p className="order-description">{order.description}</p>
+          )}
+          {order.photo_url && (
+            <div className="order-photo">
+              <img src={order.photo_url} alt="Фото заказа" />
+            </div>
+          )}
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}

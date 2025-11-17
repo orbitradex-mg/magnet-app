@@ -121,7 +121,7 @@ router.post('/:orderId/complete', authenticateToken, async (req, res) => {
 // Создать новый заказ (админ)
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { order_number, processes } = req.body;
+    const { order_number, processes, description, photo_url } = req.body;
 
     if (!order_number) {
       return res.status(400).json({ error: 'Номер заказа обязателен' });
@@ -135,8 +135,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // Создаем заказ
     const result = await run(
-      'INSERT INTO orders (order_number, status) VALUES (?, ?)',
-      [order_number, 'in_progress']
+      'INSERT INTO orders (order_number, status, description, photo_url) VALUES (?, ?, ?, ?)',
+      [order_number, 'in_progress', description || null, photo_url || null]
     );
 
     // Добавляем процессы, если они указаны
@@ -160,7 +160,7 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:orderId', authenticateToken, async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { order_number, status, processes } = req.body;
+    const { order_number, status, processes, description, photo_url } = req.body;
 
     const order = await get('SELECT * FROM orders WHERE id = ?', [orderId]);
     if (!order) {
@@ -179,6 +179,16 @@ router.put('/:orderId', authenticateToken, async (req, res) => {
     // Обновляем статус, если указан
     if (status) {
       await run('UPDATE orders SET status = ? WHERE id = ?', [status, orderId]);
+    }
+
+    // Обновляем описание, если указано
+    if (description !== undefined) {
+      await run('UPDATE orders SET description = ? WHERE id = ?', [description || null, orderId]);
+    }
+
+    // Обновляем фото, если указано
+    if (photo_url !== undefined) {
+      await run('UPDATE orders SET photo_url = ? WHERE id = ?', [photo_url || null, orderId]);
     }
 
     // Обновляем процессы, если указаны

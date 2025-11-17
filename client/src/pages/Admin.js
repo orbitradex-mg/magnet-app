@@ -40,6 +40,8 @@ const Admin = () => {
   // Форма создания/редактирования
   const [formData, setFormData] = useState({
     order_number: '',
+    description: '',
+    photo_url: '',
     processes: []
   });
 
@@ -81,7 +83,7 @@ const Admin = () => {
       await axios.post(`${API_URL}/orders`, formData);
       alert('Заказ успешно создан!');
       setShowCreateForm(false);
-      setFormData({ order_number: '', processes: [] });
+      setFormData({ order_number: '', description: '', photo_url: '', processes: [] });
       fetchOrders();
     } catch (error) {
       alert(error.response?.data?.error || 'Ошибка при создании заказа');
@@ -97,6 +99,8 @@ const Admin = () => {
       setEditingOrder(order);
       setFormData({
         order_number: order.order_number,
+        description: order.description || '',
+        photo_url: order.photo_url || '',
         processes: processes
       });
       setShowCreateForm(true);
@@ -113,7 +117,7 @@ const Admin = () => {
       alert('Заказ успешно обновлен!');
       setShowCreateForm(false);
       setEditingOrder(null);
-      setFormData({ order_number: '', processes: [] });
+      setFormData({ order_number: '', description: '', photo_url: '', processes: [] });
       fetchOrders();
     } catch (error) {
       alert(error.response?.data?.error || 'Ошибка при обновлении заказа');
@@ -218,7 +222,7 @@ const Admin = () => {
               <h2>Все заказы</h2>
               <button onClick={() => {
                 setEditingOrder(null);
-                setFormData({ order_number: '', processes: [] });
+                setFormData({ order_number: '', description: '', photo_url: '', processes: [] });
                 setShowCreateForm(true);
               }} className="btn-primary">
                 + Создать заказ
@@ -238,6 +242,43 @@ const Admin = () => {
                       required
                       placeholder="Например: 1826"
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Описание</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Описание заказа..."
+                      rows="4"
+                      style={{ width: '100%', maxWidth: '600px', padding: '10px', border: '1px solid #ddd', borderRadius: '5px', fontFamily: 'inherit', fontSize: '16px' }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Фото (URL)</label>
+                    <input
+                      type="url"
+                      value={formData.photo_url}
+                      onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
+                      placeholder="https://example.com/photo.jpg"
+                      style={{ width: '100%', maxWidth: '600px' }}
+                    />
+                    <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                      Вставьте ссылку на изображение или загрузите фото на любой хостинг изображений
+                    </small>
+                    {formData.photo_url && (
+                      <div style={{ marginTop: '10px' }}>
+                        <img
+                          src={formData.photo_url}
+                          alt="Предпросмотр"
+                          style={{ maxWidth: '200px', maxHeight: '200px', border: '1px solid #ddd', borderRadius: '5px' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -265,7 +306,7 @@ const Admin = () => {
                       onClick={() => {
                         setShowCreateForm(false);
                         setEditingOrder(null);
-                        setFormData({ order_number: '', processes: [] });
+                        setFormData({ order_number: '', description: '', photo_url: '', processes: [] });
                       }}
                       className="btn-secondary"
                     >

@@ -90,6 +90,18 @@ const Orders = () => {
                     {order.status === 'in_progress' ? 'В работе' : 'Выполнено'}
                   </span>
                 </div>
+                {order.photo_url && (
+                  <div className="order-card-photo">
+                    <img src={order.photo_url} alt="Фото заказа" />
+                  </div>
+                )}
+                {order.description && (
+                  <div className="order-card-description">
+                    {order.description.length > 100 
+                      ? `${order.description.substring(0, 100)}...` 
+                      : order.description}
+                  </div>
+                )}
                 <div className="order-progress">
                   <div className="progress-text">
                     Процессов: {order.completed_processes || 0} / {order.total_processes || 0}

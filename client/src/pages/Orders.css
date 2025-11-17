@@ -173,6 +173,25 @@
   color: #999;
 }
 
+.order-card-photo {
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.order-card-photo img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.order-card-description {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
