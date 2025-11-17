@@ -1,0 +1,267 @@
+.order-details-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.order-details-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.back-button {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.back-button:hover {
+  background: #5568d3;
+}
+
+.order-details-header h1 {
+  font-size: 28px;
+  color: #333;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.processes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.process-item {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.process-item.selected {
+  border: 2px solid #667eea;
+}
+
+.process-item.pending {
+  border-left: 4px solid #ffc107;
+}
+
+.process-item.in_progress {
+  border-left: 4px solid #17a2b8;
+}
+
+.process-item.completed {
+  border-left: 4px solid #28a745;
+  opacity: 0.8;
+}
+
+.process-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.process-number {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.process-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.process-info h3 {
+  font-size: 20px;
+  color: #333;
+  margin: 0;
+}
+
+.process-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.process-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.process-status.in_progress {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.process-status.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.equipment-selection {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.equipment-selection label {
+  font-weight: 500;
+  color: #333;
+}
+
+.equipment-selection select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.start-button,
+.complete-button,
+.cancel-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.start-button {
+  background: #28a745;
+  color: white;
+}
+
+.start-button:hover {
+  background: #218838;
+}
+
+.complete-button {
+  background: #17a2b8;
+  color: white;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.complete-button:hover {
+  background: #138496;
+}
+
+.cancel-button {
+  background: #6c757d;
+  color: white;
+}
+
+.cancel-button:hover {
+  background: #5a6268;
+}
+
+.active-executions {
+  background: #e7f3ff;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.active-executions strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.execution-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #d0e7ff;
+}
+
+.execution-item:last-child {
+  border-bottom: none;
+}
+
+.my-execution-badge {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.complete-order-section {
+  margin-top: 30px;
+  text-align: center;
+  padding: 30px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.complete-order-button {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.complete-order-button:hover {
+  opacity: 0.9;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 18px;
+}
+
+.error {
+  text-align: center;
+  padding: 60px 20px;
+  color: #c33;
+  font-size: 18px;
+}
+
