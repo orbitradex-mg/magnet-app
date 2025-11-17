@@ -103,5 +103,138 @@ router.post('/:orderId/complete', authenticateToken, async (req, res) => {
   }
 });
 
+// Создать новый заказ (админ)
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const { order_number, processes } = req.body;
+
+    if (!order_number) {
+      return res.status(400).json({ error: 'Номер заказа обязателен' });
+    }
+
+    // Проверяем, не существует ли уже заказ с таким номером
+    const existingOrder = await get('SELECT id FROM orders WHERE order_number = ?', [order_number]);
+    if (existingOrder) {
+      return res.status(400).json({ error: 'Заказ с таким номером уже существует' });
+    }
+
+    // Создаем заказ
+    const result = await run(
+      'INSERT INTO orders (order_number, status) VALUES (?, ?)',
+      [order_number, 'in_progress']
+    );
+
+    // Добавляем процессы, если они указаны
+    if (processes && Array.isArray(processes) && processes.length > 0) {
+      for (let i = 0; i < processes.length; i++) {
+        await run(
+          'INSERT INTO order_processes (order_id, process_name, sequence_order) VALUES (?, ?, ?)',
+          [result.lastID, processes[i], i + 1]
+        );
+      }
+    }
+
+    res.json({ message: 'Заказ успешно создан', orderId: result.lastID });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Обновить заказ (админ)
+router.put('/:orderId', authenticateToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { order_number, status, processes } = req.body;
+
+    const order = await get('SELECT * FROM orders WHERE id = ?', [orderId]);
+    if (!order) {
+      return res.status(404).json({ error: 'Заказ не найден' });
+    }
+
+    // Обновляем номер заказа, если указан
+    if (order_number && order_number !== order.order_number) {
+      const existingOrder = await get('SELECT id FROM orders WHERE order_number = ? AND id != ?', [order_number, orderId]);
+      if (existingOrder) {
+        return res.status(400).json({ error: 'Заказ с таким номером уже существует' });
+      }
+      await run('UPDATE orders SET order_number = ? WHERE id = ?', [order_number, orderId]);
+    }
+
+    // Обновляем статус, если указан
+    if (status) {
+      await run('UPDATE orders SET status = ? WHERE id = ?', [status, orderId]);
+    }
+
+    // Обновляем процессы, если указаны
+    if (processes && Array.isArray(processes)) {
+      // Удаляем старые процессы
+      await run('DELETE FROM order_processes WHERE order_id = ?', [orderId]);
+      
+      // Добавляем новые процессы
+      for (let i = 0; i < processes.length; i++) {
+        await run(
+          'INSERT INTO order_processes (order_id, process_name, sequence_order) VALUES (?, ?, ?)',
+          [orderId, processes[i], i + 1]
+        );
+      }
+    }
+
+    res.json({ message: 'Заказ успешно обновлен' });
+  } catch (error) {
+    console.error('Error updating order:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Удалить заказ (админ)
+router.delete('/:orderId', authenticateToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await get('SELECT * FROM orders WHERE id = ?', [orderId]);
+    if (!order) {
+      return res.status(404).json({ error: 'Заказ не найден' });
+    }
+
+    // Удаляем связанные записи
+    await run('DELETE FROM process_executions WHERE order_process_id IN (SELECT id FROM order_processes WHERE order_id = ?)', [orderId]);
+    await run('DELETE FROM order_processes WHERE order_id = ?', [orderId]);
+    await run('DELETE FROM orders WHERE id = ?', [orderId]);
+
+    res.json({ message: 'Заказ успешно удален' });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Получить статистику (админ)
+router.get('/stats/summary', authenticateToken, async (req, res) => {
+  try {
+    const totalOrders = await get('SELECT COUNT(*) as count FROM orders');
+    const inProgressOrders = await get('SELECT COUNT(*) as count FROM orders WHERE status = ?', ['in_progress']);
+    const completedOrders = await get('SELECT COUNT(*) as count FROM orders WHERE status = ?', ['completed']);
+    
+    const totalProcesses = await get('SELECT COUNT(*) as count FROM order_processes');
+    const completedProcesses = await get('SELECT COUNT(*) as count FROM order_processes WHERE status = ?', ['completed']);
+
+    res.json({
+      orders: {
+        total: totalOrders.count,
+        in_progress: inProgressOrders.count,
+        completed: completedOrders.count
+      },
+      processes: {
+        total: totalProcesses.count,
+        completed: completedProcesses.count
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;
 

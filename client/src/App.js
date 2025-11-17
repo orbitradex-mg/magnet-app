@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Orders from './pages/Orders';
 import OrderDetails from './pages/OrderDetails';
+import Admin from './pages/Admin';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
@@ -36,6 +37,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <OrderDetails />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <Admin />
                 </PrivateRoute>
               }
             />

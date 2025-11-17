@@ -41,6 +41,9 @@ const Orders = () => {
         <div className="header-content">
           <h1>Управление заказами</h1>
           <div className="user-info">
+            <button onClick={() => navigate('/admin')} className="admin-button">
+              Админ-панель
+            </button>
             <span>Привет, {user?.name || user?.username}!</span>
             <button onClick={logout} className="logout-button">
               Выйти

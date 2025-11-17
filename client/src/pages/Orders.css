@@ -30,6 +30,22 @@
   gap: 15px;
 }
 
+.admin-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .logout-button {
   background: rgba(255, 255, 255, 0.2);
   color: white;
