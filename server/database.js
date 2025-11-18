@@ -52,9 +52,17 @@ const createTables = async () => {
       username TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       name TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'employee',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Добавляем поле role, если таблица уже существует
+  try {
+    await runQuery('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "employee"');
+  } catch (e) {
+    // Поле уже существует, игнорируем ошибку
+  }
 
   // Таблица заказов
   await runQuery(`
@@ -108,15 +116,29 @@ const createTables = async () => {
     )
   `);
 
+  // Таблица переменных процессов
+  await runQuery(`
+    CREATE TABLE IF NOT EXISTS process_variables (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      process_execution_id INTEGER NOT NULL,
+      variable_name TEXT NOT NULL,
+      variable_value TEXT,
+      FOREIGN KEY (process_execution_id) REFERENCES process_executions(id)
+    )
+  `);
+
   // Создаем тестового пользователя (пароль: admin123)
   const existingUser = await getQuery('SELECT id FROM users WHERE username = ?', ['admin']);
   
   if (!existingUser) {
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.default.hash('admin123', 10);
-    await runQuery('INSERT INTO users (username, password, name) VALUES (?, ?, ?)', 
-      ['admin', hashedPassword, 'Администратор']);
-    console.log('Test user created: admin / admin123');
+    await runQuery('INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)', 
+      ['admin', hashedPassword, 'Администратор', 'admin']);
+    console.log('Test user created: admin / admin123 (role: admin)');
+  } else {
+    // Обновляем роль существующего админа
+    await runQuery('UPDATE users SET role = ? WHERE username = ?', ['admin', 'admin']);
   }
 
   // Создаем тестовый заказ

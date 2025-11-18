@@ -66,6 +66,20 @@ router.get('/:orderId', authenticateToken, async (req, res) => {
           ORDER BY pe.started_at DESC
         `, [process.id]);
         
+        // Загружаем переменные для каждого выполнения
+        for (const execution of allExecutions) {
+          const variables = await query(`
+            SELECT variable_name, variable_value
+            FROM process_variables
+            WHERE process_execution_id = ?
+          `, [execution.id]);
+          
+          execution.variables = {};
+          variables.forEach(v => {
+            execution.variables[v.variable_name] = v.variable_value;
+          });
+        }
+        
         process.all_executions = allExecutions;
       } else {
         // Только активные выполнения (для обычных пользователей)
@@ -76,6 +90,20 @@ router.get('/:orderId', authenticateToken, async (req, res) => {
           WHERE pe.order_process_id = ? AND pe.completed_at IS NULL
           ORDER BY pe.started_at DESC
         `, [process.id]);
+        
+        // Загружаем переменные для активных выполнений
+        for (const execution of executions) {
+          const variables = await query(`
+            SELECT variable_name, variable_value
+            FROM process_variables
+            WHERE process_execution_id = ?
+          `, [execution.id]);
+          
+          execution.variables = {};
+          variables.forEach(v => {
+            execution.variables[v.variable_name] = v.variable_value;
+          });
+        }
         
         process.active_executions = executions;
       }

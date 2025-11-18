@@ -27,7 +27,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, name: user.name },
+      { id: user.id, username: user.username, name: user.name, role: user.role },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -56,7 +56,7 @@ router.get('/me', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await get('SELECT id, username, name FROM users WHERE id = ?', [decoded.id]);
+    const user = await get('SELECT id, username, name, role FROM users WHERE id = ?', [decoded.id]);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/:processId/start', authenticateToken, async (req, res) => {
   try {
     const { processId } = req.params;
-    const { equipment } = req.body;
+    const { equipment, variables } = req.body;
     const userId = req.user.id;
 
     // Проверяем, существует ли процесс
@@ -47,6 +47,18 @@ router.post('/:processId/start', authenticateToken, async (req, res) => {
       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
     `, [processId, userId, equipment || null]);
 
+    // Сохраняем переменные, если они указаны
+    if (variables && typeof variables === 'object') {
+      for (const [key, value] of Object.entries(variables)) {
+        if (value !== null && value !== undefined && value !== '') {
+          await run(`
+            INSERT INTO process_variables (process_execution_id, variable_name, variable_value)
+            VALUES (?, ?, ?)
+          `, [result.lastID, key, String(value)]);
+        }
+      }
+    }
+
     // Обновляем статус процесса на "in_progress", если он был "pending"
     await run(`
       UPDATE order_processes
@@ -68,7 +80,7 @@ router.post('/:processId/start', authenticateToken, async (req, res) => {
 router.post('/:processId/complete', authenticateToken, async (req, res) => {
   try {
     const { processId } = req.params;
-    const { executionId } = req.body;
+    const { executionId, variables } = req.body;
     const userId = req.user.id;
 
     // Проверяем, что выполнение существует и принадлежит пользователю
@@ -94,6 +106,34 @@ router.post('/:processId/complete', authenticateToken, async (req, res) => {
       return res.status(404).json({ 
         error: 'Active execution not found or already completed' 
       });
+    }
+
+    // Сохраняем переменные перед завершением, если они указаны
+    if (variables && typeof variables === 'object') {
+      for (const [key, value] of Object.entries(variables)) {
+        if (value !== null && value !== undefined && value !== '') {
+          // Проверяем, существует ли уже переменная
+          const existing = await get(`
+            SELECT id FROM process_variables 
+            WHERE process_execution_id = ? AND variable_name = ?
+          `, [execution.id, key]);
+          
+          if (existing) {
+            // Обновляем существующую переменную
+            await run(`
+              UPDATE process_variables 
+              SET variable_value = ? 
+              WHERE process_execution_id = ? AND variable_name = ?
+            `, [String(value), execution.id, key]);
+          } else {
+            // Создаем новую переменную
+            await run(`
+              INSERT INTO process_variables (process_execution_id, variable_name, variable_value)
+              VALUES (?, ?, ?)
+            `, [execution.id, key, String(value)]);
+          }
+        }
+      }
     }
 
     // Завершаем выполнение
@@ -138,6 +178,20 @@ router.get('/:processId/executions', authenticateToken, async (req, res) => {
       WHERE pe.order_process_id = ?
       ORDER BY pe.started_at DESC
     `, [processId]);
+
+    // Загружаем переменные для каждого выполнения
+    for (const execution of executions) {
+      const variables = await query(`
+        SELECT variable_name, variable_value
+        FROM process_variables
+        WHERE process_execution_id = ?
+      `, [execution.id]);
+      
+      execution.variables = {};
+      variables.forEach(v => {
+        execution.variables[v.variable_name] = v.variable_value;
+      });
+    }
 
     res.json(executions);
   } catch (error) {

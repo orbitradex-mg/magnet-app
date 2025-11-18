@@ -248,6 +248,57 @@
   font-weight: 600;
 }
 
+/* Форма переменных процесса */
+.process-variables-form {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.process-variables-form h4 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 16px;
+}
+
+.variable-group {
+  margin-bottom: 15px;
+}
+
+.variable-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.variable-group select,
+.variable-group input[type="number"],
+.variable-group input[type="text"] {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.completion-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px;
+  background: #fff3cd;
+  border-radius: 5px;
+}
+
+.completion-form label {
+  font-weight: 500;
+  color: #856404;
+}
+
 .complete-order-section {
   margin-top: 30px;
   text-align: center;

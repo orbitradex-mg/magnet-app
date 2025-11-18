@@ -27,15 +27,26 @@ const ALL_PROCESSES = [
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  
+  // Форма пользователя
+  const [userFormData, setUserFormData] = useState({
+    username: '',
+    password: '',
+    name: '',
+    role: 'employee'
+  });
   
   // Форма создания/редактирования
   const [formData, setFormData] = useState({
@@ -50,6 +61,8 @@ const Admin = () => {
       fetchOrders();
     } else if (activeTab === 'stats') {
       fetchStats();
+    } else if (activeTab === 'users') {
+      fetchUsers();
     }
   }, [activeTab]);
 
@@ -74,6 +87,75 @@ const Admin = () => {
       console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/users`);
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      if (error.response?.status === 403) {
+        alert('У вас нет прав для просмотра пользователей');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/users`, userFormData);
+      alert('Пользователь успешно создан!');
+      setShowUserForm(false);
+      setUserFormData({ username: '', password: '', name: '', role: 'employee' });
+      fetchUsers();
+    } catch (error) {
+      alert(error.response?.data?.error || 'Ошибка при создании пользователя');
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setUserFormData({
+      username: user.username,
+      password: '',
+      name: user.name,
+      role: user.role
+    });
+    setShowUserForm(true);
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`${API_URL}/users/${editingUser.id}`, userFormData);
+      alert('Пользователь успешно обновлен!');
+      setShowUserForm(false);
+      setEditingUser(null);
+      setUserFormData({ username: '', password: '', name: '', role: 'employee' });
+      fetchUsers();
+      // Если обновляем текущего пользователя, обновляем его данные
+      if (editingUser.id === user?.id) {
+        await refreshUser();
+      }
+    } catch (error) {
+      alert(error.response?.data?.error || 'Ошибка при обновлении пользователя');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+      try {
+        await axios.delete(`${API_URL}/users/${userId}`);
+        alert('Пользователь успешно удален!');
+        fetchUsers();
+      } catch (error) {
+        alert(error.response?.data?.error || 'Ошибка при удалении пользователя');
+      }
     }
   };
 
@@ -207,6 +289,12 @@ const Admin = () => {
             onClick={() => setActiveTab('orders')}
           >
             Управление заказами
+          </button>
+          <button
+            className={`tab ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            Управление пользователями
           </button>
           <button
             className={`tab ${activeTab === 'stats' ? 'active' : ''}`}
@@ -401,6 +489,146 @@ const Admin = () => {
           </div>
         )}
 
+        {activeTab === 'users' && (
+          <div className="users-management">
+            <div className="section-header">
+              <h2>Управление пользователями</h2>
+              <button onClick={() => {
+                setEditingUser(null);
+                setUserFormData({ username: '', password: '', name: '', role: 'employee' });
+                setShowUserForm(true);
+              }} className="btn-primary">
+                + Создать пользователя
+              </button>
+            </div>
+
+            {showUserForm && (
+              <div className="create-order-form">
+                <h3>{editingUser ? 'Редактировать пользователя' : 'Создать нового пользователя'}</h3>
+                <form onSubmit={editingUser ? handleUpdateUser : handleCreateUser}>
+                  <div className="form-group">
+                    <label>Имя пользователя *</label>
+                    <input
+                      type="text"
+                      value={userFormData.username}
+                      onChange={(e) => setUserFormData({ ...userFormData, username: e.target.value })}
+                      required
+                      placeholder="username"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Пароль {editingUser ? '(оставьте пустым, чтобы не менять)' : '*'}</label>
+                    <input
+                      type="password"
+                      value={userFormData.password}
+                      onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                      required={!editingUser}
+                      placeholder="Пароль"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Имя *</label>
+                    <input
+                      type="text"
+                      value={userFormData.name}
+                      onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
+                      required
+                      placeholder="Имя сотрудника"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Роль *</label>
+                    <select
+                      value={userFormData.role}
+                      onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value })}
+                      required
+                      style={{ width: '100%', maxWidth: '300px', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}
+                    >
+                      <option value="employee">Сотрудник</option>
+                      <option value="admin">Администратор</option>
+                    </select>
+                  </div>
+
+                  <div className="form-actions">
+                    <button type="submit" className="btn-primary">
+                      {editingUser ? 'Сохранить изменения' : 'Создать пользователя'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserForm(false);
+                        setEditingUser(null);
+                        setUserFormData({ username: '', password: '', name: '', role: 'employee' });
+                      }}
+                      className="btn-secondary"
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="loading">Загрузка пользователей...</div>
+            ) : (
+              <div className="orders-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Имя пользователя</th>
+                      <th>Имя</th>
+                      <th>Роль</th>
+                      <th>Создан</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map(userItem => (
+                      <tr key={userItem.id}>
+                        <td>{userItem.username}</td>
+                        <td>{userItem.name}</td>
+                        <td>
+                          <span className={`status-badge ${userItem.role === 'admin' ? 'completed' : 'in_progress'}`}>
+                            {userItem.role === 'admin' ? 'Администратор' : 'Сотрудник'}
+                          </span>
+                        </td>
+                        <td>{new Date(userItem.created_at).toLocaleDateString('ru-RU')}</td>
+                        <td>
+                          <div className="action-buttons">
+                            <button
+                              onClick={() => handleEditUser(userItem)}
+                              className="btn-edit"
+                              title="Редактировать"
+                            >
+                              ✏️
+                            </button>
+                            {userItem.id !== user?.id && userItem.role !== 'admin' && (
+                              <button
+                                onClick={() => handleDeleteUser(userItem.id)}
+                                className="btn-delete"
+                                title="Удалить"
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {users.length === 0 && (
+                  <div className="empty-state">Пользователей пока нет</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'stats' && (
           <div className="stats-section">
             <h2>Статистика</h2>
@@ -479,6 +707,7 @@ const Admin = () => {
                           <tr>
                             <th>Сотрудник</th>
                             <th>Оборудование</th>
+                            <th>Переменные</th>
                             <th>Начало работы</th>
                             <th>Окончание работы</th>
                             <th>Длительность</th>
@@ -490,6 +719,20 @@ const Admin = () => {
                             <tr key={execution.id}>
                               <td>{execution.user_name || execution.username}</td>
                               <td>{execution.equipment || '-'}</td>
+                              <td>
+                                {execution.variables && Object.keys(execution.variables).length > 0 ? (
+                                  <div className="variables-list">
+                                    {Object.entries(execution.variables).map(([key, value]) => (
+                                      <div key={key} className="variable-item">
+                                        <strong>{key === 'material' ? 'Материал' : 
+                                                 key === 'sheet_size' ? 'Размер' :
+                                                 key === 'sheet_count' ? 'Листов' :
+                                                 key === 'defective_count' ? 'Брак' : key}:</strong> {value}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : '-'}
+                              </td>
                               <td>
                                 {execution.started_at
                                   ? new Date(execution.started_at).toLocaleString('ru-RU')

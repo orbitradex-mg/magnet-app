@@ -503,3 +503,18 @@
   background: #f0f0f0;
 }
 
+.variables-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.variable-item {
+  padding: 2px 0;
+}
+
+.variable-item strong {
+  color: #667eea;
+}
+
