@@ -31,7 +31,9 @@ const OrderDetails = () => {
 
   useEffect(() => {
     fetchOrderDetails();
-    const interval = setInterval(fetchOrderDetails, 5000); // Обновление каждые 5 секунд
+    // Обновление каждые 30 секунд (вместо 5) для уменьшения нагрузки
+    // Можно отключить, если не нужно автообновление
+    const interval = setInterval(fetchOrderDetails, 30000);
     return () => clearInterval(interval);
   }, [orderId]);
 

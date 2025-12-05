@@ -26,6 +26,13 @@ router.get('/', authenticateToken, async (req, res) => {
     sql += ' GROUP BY o.id ORDER BY o.created_at DESC';
     
     const orders = await query(sql, params);
+    
+    // Логируем для отладки
+    console.log(`📋 Fetched ${orders.length} order(s), status filter: ${status || 'all'}`);
+    if (orders.length > 0) {
+      console.log(`   Orders: ${orders.map(o => `#${o.order_number}`).join(', ')}`);
+    }
+    
     res.json(orders);
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -163,9 +170,11 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // Создаем заказ
     const result = await run(
-      'INSERT INTO orders (order_number, status, description, photo_url) VALUES (?, ?, ?, ?)',
+      'INSERT INTO orders (order_number, status, description, photo_url) VALUES (?, ?, ?, ?) RETURNING id',
       [order_number, 'in_progress', description || null, photo_url || null]
     );
+    
+    console.log(`✅ Order created: #${order_number}, ID: ${result.lastID}`);
 
     // Добавляем процессы, если они указаны
     if (processes && Array.isArray(processes) && processes.length > 0) {

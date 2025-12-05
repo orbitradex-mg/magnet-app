@@ -53,7 +53,7 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 
     // Создаем пользователя
     const result = await run(
-      'INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)',
+      'INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?) RETURNING id',
       [username, hashedPassword, name, role || 'employee']
     );
 

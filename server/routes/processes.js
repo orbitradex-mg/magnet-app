@@ -44,7 +44,7 @@ router.post('/:processId/start', authenticateToken, async (req, res) => {
     // Создаем запись о начале выполнения
     const result = await run(`
       INSERT INTO process_executions (order_process_id, user_id, equipment, started_at)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+      VALUES (?, ?, ?, CURRENT_TIMESTAMP) RETURNING id
     `, [processId, userId, equipment || null]);
 
     // Сохраняем переменные, если они указаны
